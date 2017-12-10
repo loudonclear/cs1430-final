@@ -13,61 +13,57 @@ OUTDIM = 2
 BATCH = 20
 ITERS = 100
 
-start = 0
-
-imgs_arr = []
-coor_arr = []
 
 
 
 dataFile = "/gazePredictions.csv"
-
 test_index = "test_1430_1.txt"
 train_index = "train_1430_1.txt"
 
-with open(train_index) as index:
-    #tot = sum(1 for line in index)
-    count = 0
-    
-    for line in index:
+index = []
+with open(train_index) as ind:
+    for line in ind:
         dirToView = line.rstrip('\n')
-        print(count)
-        if count > 250:
-            break
         try:
             with open(dirToView + dataFile) as f:
                 readCSV = csv.reader(f, delimiter=',')
-                
-                
                 for row in readCSV:
-                    frameFilename = row[0]
-                    # frameTimestamp = row[1]
-                    
-                    # Tobii has been calibrated such that 0,0 is top left and 1,1 is bottom right on the display.
-                    tobiiLeftEyeGazeX = float(row[2])
-                    tobiiLeftEyeGazeY = float(row[3])
-                    tobiiRightEyeGazeX = float(row[4])
-                    tobiiRightEyeGazeY = float(row[5])
+                    index.append(row)
+        except:
+            pass
 
-                    tobiiEyeGazeX = (tobiiLeftEyeGazeX + tobiiRightEyeGazeX) / 2
-                    tobiiEyeGazeY = (tobiiLeftEyeGazeY + tobiiRightEyeGazeY) / 2
+tot = sum(1 for line in index)
+start = 0
 
-
-                    img = cv2.imread(frameFilename)
-                    imgs_arr += [img]
-
-                    coor_arr += [[tobiiEyeGazeX, tobiiEyeGazeY]]
-        except FileNotFoundError:
-            print()
-        count += 1
 
 def next_batch(size):
     global start
-    if start + size >= len(imgs_arr):
-        start = 0
-        # start = start + size - len(imgs_arr)
-    img_batch = imgs_arr[start:start+size]
-    coor_batch = coor_arr[start:start+size]
+    if start + size >= tot:
+        start = start + size - len(imgs_arr)
+
+    img_batch = []
+    coor_batch = []
+    batchIndex = index[start:start+size]
+    
+    for row in batchIndex:
+        frameFilename = row[0]
+        # frameTimestamp = row[1]
+                    
+        # Tobii has been calibrated such that 0,0 is top left and 1,1 is bottom right on the display.
+        tobiiLeftEyeGazeX = float(row[2])
+        tobiiLeftEyeGazeY = float(row[3])
+        tobiiRightEyeGazeX = float(row[4])
+        tobiiRightEyeGazeY = float(row[5])
+
+        tobiiEyeGazeX = (tobiiLeftEyeGazeX + tobiiRightEyeGazeX) / 2
+        tobiiEyeGazeY = (tobiiLeftEyeGazeY + tobiiRightEyeGazeY) / 2
+
+
+        img = cv2.imread(frameFilename)
+        img_batch += [img]
+
+        coor_batch += [[tobiiEyeGazeX, tobiiEyeGazeY]]
+
     start += size
     return img_batch, coor_batch
 
