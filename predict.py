@@ -44,11 +44,11 @@ def next_batch(size):
     img_batch = []
     coor_batch = []
     batchIndex = index[start:start+size]
-    
+
     for row in batchIndex:
         frameFilename = row[0]
         # frameTimestamp = row[1]
-                    
+
         # Tobii has been calibrated such that 0,0 is top left and 1,1 is bottom right on the display.
         tobiiLeftEyeGazeX = float(row[2])
         tobiiLeftEyeGazeY = float(row[3])
@@ -111,9 +111,16 @@ train_step = tf.train.AdamOptimizer(1e-3).minimize(loss)
 sess = tf.Session()
 sess.run(tf.global_variables_initializer())
 
+squared_dists = []
 for i in range(ITERS):
     img_batch, coor_batch = next_batch(BATCH)
     if i % 2 == 0:
         l = sess.run(loss, feed_dict={imgs: img_batch, coords: coor_batch})
         print(l)
+        squared_dists.append(l)
     sess.run(train_step, feed_dict={imgs: img_batch, coords: coor_batch})
+
+plt.plot(range(1, ITERS + 1), squared_dists)
+plt.xlabel('iteration')
+plt.ylabel('squared distance')
+plt.show()
